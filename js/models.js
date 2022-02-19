@@ -25,7 +25,7 @@ class Story {
 
   getHostName() {
     // UNIMPLEMENTED: complete this function!
-    return "hostname.com";
+    return new URL(this.url).host;
   }
 }
 
@@ -76,8 +76,10 @@ class StoryList {
   async addStory(user, {title, author, url}) {
     // UNIMPLEMENTED: complete this function!
     const token  = user.loginToken;
-    const res = await axios.post('https://hack-or-snooze-v3.herokuapp.com/stories', {token, story: {title: title, author: author, url: url}});
+    const res = await axios.post('https://hack-or-snooze-v3.herokuapp.com/stories', { token, story: { title, author, url } });
     const story = new Story(res.data.story);
+    //this.stories.unshift(story);
+    //user.ownStories.unshift(story);
     return story;
   }
 }
