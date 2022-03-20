@@ -8,7 +8,6 @@ let storyList;
 async function getAndShowStoriesOnStart() {
   storyList = await StoryList.getStories();
   $storiesLoadingMsg.remove();
-
   putStoriesOnPage();
 }
 
@@ -20,15 +19,20 @@ async function getAndShowStoriesOnStart() {
  */
 
 function generateStoryMarkup(story) {
-  // console.debug("generateStoryMarkup", story);
 
   const hostName = story.getHostName();
   return $(`
       <li id="${story.storyId}">
+        <span class="heart">
+        <i class="fa-thin fa-heart far"></i>
+        </span>
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
         </a>
         <small class="story-hostname">(${hostName})</small>
+        <span class="trash">
+        <i class="fas fa-trash"></i>
+        </span>
         <small class="story-author">by ${story.author}</small>
         <small class="story-user">posted by ${story.username}</small>
       </li>
@@ -38,16 +42,14 @@ function generateStoryMarkup(story) {
 /** Gets list of stories from server, generates their HTML, and puts on page. */
 
 function putStoriesOnPage() {
-  console.debug("putStoriesOnPage");
 
   $allStoriesList.empty();
 
   // loop through all of our stories and generate HTML for them
   for (let story of storyList.stories) {
-    const $story = generateStoryMarkup(story);
+    const $story = generateStoryMarkup(story);   
     $allStoriesList.append($story);
   }
-
   $allStoriesList.show();
 }
 
@@ -58,10 +60,76 @@ async function getAndAddNewStory() {
   const url = $("#url-input").val();
   const myNewStory = await storyList.addStory(currentUser, {title, author, url, username});
   const $myNewStory = generateStoryMarkup(myNewStory);
+  $trash.append('<i class="fas fa-trash"></i>')
   $allStoriesList.prepend($myNewStory);
+  putStoriesOnPage()
 }
 
 $submitStoryBtn.on('click', function(evt) {
   evt.preventDefault();
   getAndAddNewStory();
 })
+
+async function trashStory(evt) {
+  const $closestLi = $(evt.target).closest('li');
+  const storyId = $closestLi.attr('id');
+  await storyList.deleteStory(currentUser, storyId);
+  let idx = currentUser.ownStories.indexOf($closestLi);
+  currentUser.ownStories.splice(idx, 1);
+  location.reload();
+}
+
+$userStories.on('click', '.fas.fa-trash', trashStory);
+
+function showUserStories() {
+  $userStories.empty();
+  if (currentUser.ownStories.length === 0) {
+    $userStories.append('<h4>No stories added!</h4>');
+  }
+  else {
+    for (let story of currentUser.ownStories) {
+      const $story = generateStoryMarkup(story);
+      $userStories.append($story);
+    }
+  }
+  $userStories.show();
+}
+
+async function markFave(evt) {
+  const $heart = $(evt.target);
+  const $closestLi = $heart.closest('li');
+  const storyId = $closestLi.attr('id');
+  const story = storyList.stories.find(s => s.storyId === storyId);
+  await currentUser.addFavStory(story);
+  $heart.closest('i').removeClass('far').addClass('fas');
+}
+
+$allStoriesList.on('click', '.fa-thin.fa-heart.far', markFave);
+
+
+async function unmarkFave(evt) {
+  const $heart = $(evt.target);
+  const $closestLi = $heart.closest('li');
+  const storyId = $closestLi.attr('id');
+  const story = storyList.stories.find(s => s.storyId === storyId);
+  await currentUser.deleteFavStory(story);
+  $heart.closest('i').removeClass('fas').addClass('far');
+}
+
+$allStoriesList.on('click', '.fa-thin.fa-heart.fas', unmarkFave);
+$favStories.on('click', '.fa-thin.fa-heart.fas', unmarkFave);
+
+
+function showFavesList() {
+  $favStories.empty();
+  if (currentUser.favorites.length === 0) {
+  $favStories.append('<h4>No favorites added!</h4>')
+  }
+  else {
+    for (let story of currentUser.favorites) {
+      const $story = generateStoryMarkup(story);
+      $('i').removeClass('far').addClass('fas');
+      $favStories.append($story);
+    }
+  }
+}

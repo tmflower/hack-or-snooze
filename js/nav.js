@@ -10,15 +10,21 @@ function navAllStories(evt) {
   console.debug("navAllStories", evt);
   hidePageComponents();
   putStoriesOnPage();
+  if (currentUser) {
+    $navLinks.show()
+  }
 }
 
 $body.on("click", "#nav-all", navAllStories);
+
+/* Allow user to add a story */
 
 function navSubmitStoryClick(evt) {
   console.debug("navSubmitClick", evt);
   hidePageComponents();
   $allStoriesList.show();
   $submitStoryForm.show();
+  $navLinks.show()
 }
 
 $navSubmit.on("click", navSubmitStoryClick);
@@ -38,9 +44,28 @@ $navLogin.on("click", navLoginClick);
 
 function updateNavOnLogin() {
   console.debug("updateNavOnLogin");
-  $(".main-nav-links").show();
   $navLogin.hide();
   $navLinks.show();
   $navLogOut.show();
   $navUserProfile.text(`${currentUser.username}`).show();
 }
+
+/** When a user clicks on favorites in the navbar, show a list of the stories they've marked as favorites */
+
+function showFaves(evt) {
+  hidePageComponents();
+  showFavesList();
+  $favStories.show()
+  $navLinks.show()
+}
+
+$navFav.on("click", showFaves);
+
+function showUserStories(evt) {
+  hidePageComponents();
+  showUserStories();
+  $userStories.show()
+  $navLinks.show()
+}
+
+$navUserStories.on("click", showUserStories);
