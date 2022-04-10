@@ -20,18 +20,36 @@ async function getAndShowStoriesOnStart() {
 
 function generateStoryMarkup(story) {
 
+  let heart;
+  if (currentUser.favorites.includes(story)) {
+    heart = "fas";
+  }
+  else {
+    heart = "far";
+  }
+
+  let trash;
+  if (currentUser.ownStories.includes(story)) {
+          trash = "fas fa-trash"
+  }
+  else {
+    trash = ""
+  }
+
+  
+
   const hostName = story.getHostName();
   return $(`
       <li id="${story.storyId}">
-        <span class="heart">
-        <i class="fa-thin fa-heart far"></i>
+        <span class="heart">        
+        <i class="fa-thin fa-heart  ${heart}"></i>
         </span>
         <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
         </a>
         <small class="story-hostname">(${hostName})</small>
         <span class="trash">
-        <i class="fas fa-trash"></i>
+        <i class="${trash}"></i>
         </span>
         <small class="story-author">by ${story.author}</small>
         <small class="story-user">posted by ${story.username}</small>
@@ -60,7 +78,6 @@ async function getAndAddNewStory() {
   const url = $("#url-input").val();
   const myNewStory = await storyList.addStory(currentUser, {title, author, url, username});
   const $myNewStory = generateStoryMarkup(myNewStory);
-  $trash.append('<i class="fas fa-trash"></i>')
   $allStoriesList.prepend($myNewStory);
   putStoriesOnPage()
 }
@@ -76,6 +93,7 @@ async function trashStory(evt) {
   await storyList.deleteStory(currentUser, storyId);
   let idx = currentUser.ownStories.indexOf($closestLi);
   currentUser.ownStories.splice(idx, 1);
+  putStoriesOnPage();
   location.reload();
 }
 
@@ -101,7 +119,7 @@ async function markFave(evt) {
   const storyId = $closestLi.attr('id');
   const story = storyList.stories.find(s => s.storyId === storyId);
   await currentUser.addFavStory(story);
-  $heart.closest('i').removeClass('far').addClass('fas');
+  $heart.closest('i').toggleClass('fas far');
 }
 
 $allStoriesList.on('click', '.fa-thin.fa-heart.far', markFave);
@@ -113,7 +131,7 @@ async function unmarkFave(evt) {
   const storyId = $closestLi.attr('id');
   const story = storyList.stories.find(s => s.storyId === storyId);
   await currentUser.deleteFavStory(story);
-  $heart.closest('i').removeClass('fas').addClass('far');
+  $heart.closest('i').toggleClass('fas far');
 }
 
 $allStoriesList.on('click', '.fa-thin.fa-heart.fas', unmarkFave);
@@ -128,7 +146,6 @@ function showFavesList() {
   else {
     for (let story of currentUser.favorites) {
       const $story = generateStoryMarkup(story);
-      $('i').removeClass('far').addClass('fas');
       $favStories.append($story);
     }
   }
